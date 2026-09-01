@@ -1,12 +1,15 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { AppText } from '@/src/components/AppText';
 
 export default function HomeScreen() {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Splitwise</Text>
-            <Text style={styles.subtitle}>
-                Split expenses with your folks.
-            </Text>
+            <AppText style={styles.title}>Splitwise</AppText>
+
+            <AppText style={styles.subtitle}>
+                Split expenses without doing the math.
+            </AppText>
         </View>
     );
 }
@@ -24,6 +27,6 @@ const styles = StyleSheet.create({
     },
     subtitle: {
         marginTop: 8,
-        fontSize: 16,
+        color: '#6B7280',
     },
 });

@@ -9,21 +9,34 @@ import {
     TextInput,
     View,
 } from 'react-native';
-import { useGroups } from '../../src/features/groups/GroupsContext';
+import { supabase } from '../../../src/lib/supabase';
 export default function CreateGroupScreen() {
     const [name, setName] = useState('');
-    const { createGroup } = useGroups();
     const canSubmit = name.trim().length > 0;
-
-    function handleCreateGroup() {
-        if (!canSubmit) {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    async function handleCreateGroup() {
+        if (!canSubmit || isSubmitting) {
             return;
         }
 
-        createGroup(name.trim());
-        router.back();
-    }
+        try {
+            setIsSubmitting(true);
 
+            const { error } = await supabase.rpc('create_group', {
+                group_name: name.trim(),
+                group_currency: 'EUR',
+            });
+
+            if (error) {
+                console.error('Create group failed:', error);
+                return;
+            }
+
+            router.back();
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
     return (
         <KeyboardAvoidingView
             style={styles.screen}
@@ -45,7 +58,7 @@ export default function CreateGroupScreen() {
                 </View>
 
                 <Pressable
-                    disabled={!canSubmit}
+                    disabled={!canSubmit || isSubmitting}
                     onPress={handleCreateGroup}
                     style={({ pressed }) => [
                         styles.button,
@@ -53,7 +66,9 @@ export default function CreateGroupScreen() {
                         pressed && canSubmit && styles.buttonPressed,
                     ]}
                 >
-                    <Text style={styles.buttonText}>Create group</Text>
+                    <Text style={styles.buttonText}>
+                        {isSubmitting ? 'Creating...' : 'Create group'}
+                    </Text>
                 </Pressable>
             </View>
         </KeyboardAvoidingView>

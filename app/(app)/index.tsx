@@ -1,4 +1,5 @@
 import { useGroups } from '@/src/features/groups/GroupsContext';
+import { supabase } from '@/src/lib/supabase';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 export default function HomeScreen() {
@@ -24,11 +25,18 @@ export default function HomeScreen() {
                     </>
                 ) : (
                     groups.map((group) => (
-                        <View key={group.id} style={styles.groupCard}>
+                        <Pressable
+                            key={group.id}
+                            style={({ pressed }) => [
+                                styles.groupCard,
+                                pressed && styles.groupCardPressed,
+                            ]}
+                            onPress={() => router.push(`/groups/${group.id}`)}
+                        >
                             <Text style={styles.groupName}>{group.name}</Text>
 
                             <Text style={styles.groupMeta}>No expenses yet</Text>
-                        </View>
+                        </Pressable>
                     ))
                 )}
             </View>
@@ -38,6 +46,9 @@ export default function HomeScreen() {
                 onPress={() => router.push('/groups/create')}
             >
                 <Text style={styles.buttonText}>+ Create group</Text>
+            </Pressable>
+            <Pressable onPress={() => supabase.auth.signOut()}>
+                <Text>Sign out</Text>
             </Pressable>
         </View>
     );
@@ -50,7 +61,9 @@ const styles = StyleSheet.create({
         paddingTop: 72,
         paddingBottom: 32,
     },
-
+    groupCardPressed: {
+        opacity: 0.7,
+    },
     title: {
         fontSize: 32,
         fontWeight: '700',
@@ -65,7 +78,8 @@ const styles = StyleSheet.create({
 
     content: {
         flex: 1,
-        justifyContent: 'center',
+        gap: 12,
+        paddingTop: 32,
     },
 
     groupCard: {

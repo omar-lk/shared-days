@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -11,6 +12,7 @@ import {
 } from 'react-native';
 import { supabase } from '../../../src/lib/supabase';
 export default function CreateGroupScreen() {
+    const queryClient = useQueryClient();
     const [name, setName] = useState('');
     const canSubmit = name.trim().length > 0;
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,6 +33,10 @@ export default function CreateGroupScreen() {
                 console.error('Create group failed:', error);
                 return;
             }
+
+            await queryClient.invalidateQueries({
+                queryKey: ['groups'],
+            });
 
             router.back();
         } finally {

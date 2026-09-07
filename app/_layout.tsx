@@ -1,3 +1,4 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
@@ -5,15 +6,10 @@ import {
   AuthProvider,
   useAuth,
 } from '../src/features/auth/AuthContext';
-import { GroupsProvider } from '../src/features/groups/GroupsContext';
+import { queryClient } from '../src/lib/queryClient';
 
 function RootNavigator() {
   const { session, isLoading } = useAuth();
-
-  console.log('AUTH STATE:', {
-    session: !!session,
-    isLoading,
-  });
 
   if (isLoading) {
     return (
@@ -25,12 +21,12 @@ function RootNavigator() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!!session}>
-        <Stack.Screen name="(app)" />
-      </Stack.Protected>
-
       <Stack.Protected guard={!session}>
         <Stack.Screen name="login" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!!session}>
+        <Stack.Screen name="(app)" />
       </Stack.Protected>
     </Stack>
   );
@@ -38,11 +34,11 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <GroupsProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
         <RootNavigator />
-      </GroupsProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

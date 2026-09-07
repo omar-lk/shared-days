@@ -1,9 +1,18 @@
-import { useGroups } from '@/src/features/groups/GroupsContext';
 import { supabase } from '@/src/lib/supabase';
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { getGroups } from '../../src/features/groups/queries';
 export default function HomeScreen() {
-    const { groups } = useGroups();
+    const {
+        data: groups = [],
+        isLoading,
+        isError,
+    } = useQuery({
+        queryKey: ['groups'],
+        queryFn: getGroups,
+    });
     return (
         <View style={styles.container}>
             <View>
@@ -15,7 +24,11 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.content}>
-                {groups.length === 0 ? (
+                {isLoading ? (
+                    <Text>Loading groups...</Text>
+                ) : isError ? (
+                    <Text>Unable to load groups.</Text>
+                ) : groups.length === 0 ? (
                     <>
                         <Text style={styles.emptyTitle}>No groups yet</Text>
 
@@ -25,18 +38,13 @@ export default function HomeScreen() {
                     </>
                 ) : (
                     groups.map((group) => (
-                        <Pressable
-                            key={group.id}
-                            style={({ pressed }) => [
-                                styles.groupCard,
-                                pressed && styles.groupCardPressed,
-                            ]}
-                            onPress={() => router.push(`/groups/${group.id}`)}
-                        >
+                        <View key={group.id} style={styles.groupCard}>
                             <Text style={styles.groupName}>{group.name}</Text>
 
-                            <Text style={styles.groupMeta}>No expenses yet</Text>
-                        </Pressable>
+                            <Text style={styles.groupMeta}>
+                                {group.currency} · No expenses yet
+                            </Text>
+                        </View>
                     ))
                 )}
             </View>

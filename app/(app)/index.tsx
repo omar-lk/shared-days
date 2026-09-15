@@ -1,18 +1,54 @@
 import { supabase } from '@/src/lib/supabase';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useAuth } from '../../src/features/auth/AuthContext';
 import { getGroups } from '../../src/features/groups/queries';
 export default function HomeScreen() {
     const {
         data: groups = [],
         isLoading,
         isError,
+        error,
     } = useQuery({
         queryKey: ['groups'],
         queryFn: getGroups,
     });
+    const queryClient = useQueryClient();
+    const { session } = useAuth();
+    console.log('groups:', groups);
+    console.log('groups error:', error);
+    function handleDeleteGroup(groupId: string) {
+        Alert.alert(
+            'Delete group?',
+            'This action cannot be undone.',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        const { error } = await supabase
+                            .from('groups')
+                            .delete()
+                            .eq('id', groupId);
+
+                        if (error) {
+                            console.error('DELETE GROUP ERROR:', error);
+                            return;
+                        }
+
+                        await queryClient.invalidateQueries({
+                            queryKey: ['groups'],
+                        });
+                    },
+                },
+            ]
+        );
+    }
     return (
         <View style={styles.container}>
             <View>
@@ -39,11 +75,34 @@ export default function HomeScreen() {
                 ) : (
                     groups.map((group) => (
                         <View key={group.id} style={styles.groupCard}>
-                            <Text style={styles.groupName}>{group.name}</Text>
+                            <View style={styles.groupHeader}>
+                                <View>
+                                    <Pressable
+                                        style={{ flex: 1 }}
+                                        onPress={() =>
+                                            router.push({
+                                                pathname: '/groups/[groupId]',
+                                                params: { groupId: group.id },
+                                            })
+                                        }
+                                    >
+                                        <Text style={styles.groupName}>{group.name}</Text>
 
-                            <Text style={styles.groupMeta}>
-                                {group.currency} · No expenses yet
-                            </Text>
+                                        <Text style={styles.groupMeta}>
+                                            {group.currency} · No expenses yet
+                                        </Text>
+                                    </Pressable>
+                                </View>
+
+                                {session?.user.id === group.created_by && (
+                                    <Pressable
+                                        onPress={() => handleDeleteGroup(group.id)}
+                                        hitSlop={12}
+                                    >
+                                        <Text style={styles.deleteIcon}>🗑️</Text>
+                                    </Pressable>
+                                )}
+                            </View>
                         </View>
                     ))
                 )}
@@ -68,6 +127,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingTop: 72,
         paddingBottom: 32,
+    },
+    groupHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+
+    deleteIcon: {
+        fontSize: 20,
     },
     groupCardPressed: {
         opacity: 0.7,
@@ -95,6 +163,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E5E7EB',
         borderRadius: 16,
+        paddingBottom: 25
     },
 
     groupName: {

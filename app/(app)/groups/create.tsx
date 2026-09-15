@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -48,35 +49,55 @@ export default function CreateGroupScreen() {
             style={styles.screen}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-            <View style={styles.container}>
-                <View>
-                    <Text style={styles.label}>Group name</Text>
+            <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+                <View style={styles.container}>
+                    <View>
+                        <Pressable
+                            onPress={() => router.back()}
+                            hitSlop={12}
+                            accessibilityRole="button"
+                            accessibilityLabel="Back"
+                            style={styles.backButton}
+                        >
+                            <Text style={styles.backIcon}>‹</Text>
+                            <Text style={styles.backText}>Back</Text>
+                        </Pressable>
 
-                    <TextInput
-                        value={name}
-                        onChangeText={setName}
-                        placeholder="Barcelona Weekend"
-                        autoFocus
-                        returnKeyType="done"
-                        onSubmitEditing={handleCreateGroup}
-                        style={styles.input}
-                    />
+                        <Text style={styles.title}>Create a group</Text>
+                        <Text style={styles.subtitle}>
+                            Give your group a name to start splitting expenses together.
+                        </Text>
+
+                        <View style={styles.form}>
+                            <Text style={styles.label}>Group name</Text>
+
+                            <TextInput
+                                value={name}
+                                onChangeText={setName}
+                                placeholder="Barcelona Weekend"
+                                returnKeyType="done"
+                                onSubmitEditing={handleCreateGroup}
+                                style={styles.input}
+                                accessibilityLabel="Group name"
+                            />
+                        </View>
+                    </View>
+
+                    <Pressable
+                        disabled={!canSubmit || isSubmitting}
+                        onPress={handleCreateGroup}
+                        style={({ pressed }) => [
+                            styles.button,
+                            (!canSubmit || isSubmitting) && styles.buttonDisabled,
+                            pressed && canSubmit && !isSubmitting && styles.buttonPressed,
+                        ]}
+                    >
+                        <Text style={styles.buttonText}>
+                            {isSubmitting ? 'Creating...' : 'Create group'}
+                        </Text>
+                    </Pressable>
                 </View>
-
-                <Pressable
-                    disabled={!canSubmit || isSubmitting}
-                    onPress={handleCreateGroup}
-                    style={({ pressed }) => [
-                        styles.button,
-                        !canSubmit && styles.buttonDisabled,
-                        pressed && canSubmit && styles.buttonPressed,
-                    ]}
-                >
-                    <Text style={styles.buttonText}>
-                        {isSubmitting ? 'Creating...' : 'Create group'}
-                    </Text>
-                </Pressable>
-            </View>
+            </SafeAreaView>
         </KeyboardAvoidingView>
     );
 }
@@ -86,17 +107,60 @@ const styles = StyleSheet.create({
         flex: 1,
     },
 
+    safeArea: {
+        flex: 1,
+    },
+
     container: {
         flex: 1,
         justifyContent: 'space-between',
-        padding: 24,
-        paddingBottom: 32,
+        paddingHorizontal: 24,
+        paddingTop: 16,
+        paddingBottom: 20,
+    },
+
+    backButton: {
+        alignSelf: 'flex-start',
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 32,
+    },
+
+    backIcon: {
+        fontSize: 32,
+        lineHeight: 32,
+        color: '#111827',
+        marginRight: 4,
+    },
+
+    backText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#111827',
+    },
+
+    title: {
+        fontSize: 32,
+        fontWeight: '700',
+        color: '#111827',
+    },
+
+    subtitle: {
+        marginTop: 8,
+        fontSize: 16,
+        lineHeight: 23,
+        color: '#6B7280',
+    },
+
+    form: {
+        marginTop: 36,
     },
 
     label: {
         marginBottom: 8,
         fontSize: 15,
         fontWeight: '600',
+        color: '#374151',
     },
 
     input: {

@@ -1,50 +1,46 @@
-# Welcome to your Expo app 👋
+# Shared Days
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Shared Days is an Expo expense-splitting app for dinners, trips, coliving spaces, and other shared experiences. A group can contain account holders and named guests. Itemized bills support equal or custom splits using stable group membership IDs.
 
-## Get started
+## Current features
 
-1. Install dependencies
+- Email signup and login
+- Google and Apple OAuth integration hooks
+- Group creation and named guest members
+- Group currency selection
+- Itemized expenses with one payer
+- Equal and custom item allocations
+- Expense editing and payment status
+- WhatsApp expense summaries
+- Camera and gallery receipt import into an editable draft
 
-   ```bash
+## Local development
+
+1. Install dependencies:
+
+   ```sh
    npm install
    ```
 
-2. Start the app
+2. Copy `.env.example` to `.env` and add the Supabase project URL and publishable key. Never put service-role or OpenAI keys in the Expo environment.
 
-   ```bash
+3. Start Expo:
+
+   ```sh
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+## Supabase
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Versioned SQL migrations are stored in `supabase/migrations`. Review them before applying them to a Supabase project.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Receipt scanning uses the authenticated `scan-receipt` Edge Function in `supabase/functions/scan-receipt`. It requires an `OPENAI_API_KEY` configured as a Supabase Edge Function secret. See its README for deployment details. The secret must never be added to this repository or the mobile app.
 
-## Get a fresh project
+## Verification
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+```sh
+npx tsc --noEmit
+npx expo lint
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The expense calculation tests use Node's test runner after TypeScript compilation. Currency values are represented as integer minor units throughout the calculation and database layers.

@@ -1,10 +1,14 @@
 import { supabase } from '@/src/lib/supabase';
+import { SocialSignInButtons } from '@/src/features/auth/SocialSignInButtons';
+import { colors } from '@/src/theme/colors';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
     Alert,
     KeyboardAvoidingView,
     Platform,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -18,33 +22,6 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    async function handleSignUp() {
-        if (!email.trim() || !password) {
-            Alert.alert('Missing information', 'Enter your email and password.');
-            return;
-        }
-
-        try {
-            setIsSubmitting(true);
-
-            const { error } = await supabase.auth.signUp({
-                email: email.trim(),
-                password,
-            });
-
-            if (error) {
-                Alert.alert('Unable to sign up', error.message);
-                return;
-            }
-
-            Alert.alert(
-                'Account created',
-                'Check your email if Supabase requires email confirmation.'
-            );
-        } finally {
-            setIsSubmitting(false);
-        }
-    }
     async function handleSignIn() {
         if (!email.trim() || !password) {
             Alert.alert('Missing information', 'Enter your email and password.');
@@ -72,13 +49,21 @@ export default function LoginScreen() {
             style={styles.screen}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-            <View style={styles.container}>
+            <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
                 <View>
+                    <Text style={styles.eyebrow}>GOOD TO SEE YOU</Text>
                     <Text style={styles.title}>Welcome back</Text>
 
                     <Text style={styles.subtitle}>
                         Sign in to manage your shared expenses.
                     </Text>
+
+                    <SocialSignInButtons
+                        disabled={isSubmitting}
+                        onError={(message) => {
+                            if (message) Alert.alert('Unable to sign in', message);
+                        }}
+                    />
 
                     <TextInput
                         value={email}
@@ -101,26 +86,29 @@ export default function LoginScreen() {
                     />
                 </View>
 
-                <Pressable
-                    disabled={isSubmitting}
-                    onPress={handleSignIn}
-                    style={({ pressed }) => [
-                        styles.button,
-                        (pressed || isSubmitting) && styles.buttonPressed,
-                    ]}
-                >
-                    <Text style={styles.buttonText}>
-                        {isSubmitting ? 'Signing in...' : 'Sign in'}
-                    </Text>
-                </Pressable>
-                <Pressable
-                    disabled={isSubmitting}
-                    onPress={handleSignUp}
-                    style={styles.secondaryButton}
-                >
-                    <Text style={styles.secondaryButtonText}>Create account</Text>
-                </Pressable>
-            </View>
+                <View>
+                    <Pressable
+                        disabled={isSubmitting}
+                        onPress={handleSignIn}
+                        style={({ pressed }) => [
+                            styles.button,
+                            (pressed || isSubmitting) && styles.buttonPressed,
+                        ]}
+                    >
+                        <Text style={styles.buttonText}>
+                            {isSubmitting ? 'Signing in...' : 'Sign in'}
+                        </Text>
+                    </Pressable>
+                    <Pressable
+                        disabled={isSubmitting}
+                        onPress={() => router.push('/signup')}
+                        style={styles.secondaryButton}
+                        accessibilityRole="button"
+                    >
+                        <Text style={styles.secondaryButtonText}>Create account</Text>
+                    </Pressable>
+                </View>
+            </ScrollView>
         </KeyboardAvoidingView>
     );
 }
@@ -128,10 +116,11 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     screen: {
         flex: 1,
+        backgroundColor: colors.sand,
     },
 
     container: {
-        flex: 1,
+        flexGrow: 1,
         justifyContent: 'space-between',
         paddingHorizontal: 24,
         paddingTop: 100,
@@ -141,32 +130,37 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 32,
         fontWeight: '700',
+        color: colors.ink,
     },
+
+    eyebrow: { color: colors.clay, fontSize: 11, fontWeight: '800', letterSpacing: 1.6, marginBottom: 8 },
 
     subtitle: {
         marginTop: 8,
-        marginBottom: 32,
+        marginBottom: 0,
         fontSize: 16,
         lineHeight: 22,
-        color: '#6B7280',
+        color: colors.muted,
     },
 
     input: {
-        height: 56,
+        minHeight: 56,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#D1D5DB',
+        borderColor: colors.line,
         borderRadius: 16,
         paddingHorizontal: 16,
         fontSize: 17,
+        color: colors.ink,
+        backgroundColor: colors.paper,
     },
 
     button: {
-        height: 56,
+        minHeight: 56,
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 16,
-        backgroundColor: '#111827',
+        backgroundColor: colors.clay,
     },
 
     buttonPressed: {
@@ -174,12 +168,12 @@ const styles = StyleSheet.create({
     },
 
     buttonText: {
-        color: '#FFFFFF',
+        color: colors.white,
         fontSize: 17,
         fontWeight: '600',
     },
     secondaryButton: {
-        height: 56,
+        minHeight: 56,
         marginTop: 12,
         alignItems: 'center',
         justifyContent: 'center',
@@ -188,5 +182,6 @@ const styles = StyleSheet.create({
     secondaryButtonText: {
         fontSize: 16,
         fontWeight: '600',
+        color: colors.sea,
     },
 });

@@ -1,0 +1,15 @@
+export const colors = {
+  sand: '#F6F2E9',
+  paper: '#FFFDF8',
+  ink: '#193842',
+  muted: '#52676C',
+  sea: '#195966',
+  seaLight: '#E3EFF0',
+  clay: '#A74731',
+  clayLight: '#F8E8DE',
+  olive: '#536A4D',
+  oliveLight: '#E7EFE3',
+  line: '#D8DDD7',
+  white: '#FFFFFF',
+  danger: '#A43F39',
+} as const;

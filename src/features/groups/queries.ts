@@ -36,29 +36,16 @@ export async function getGroup(groupId: string): Promise<Group> {
   return data;
 }
 export type GroupMember = {
-  user_id: string;
+  id: string;
+  user_id: string | null;
+  display_name: string;
   role: 'owner' | 'member';
-  profile: {
-    id: string;
-    display_name: string | null;
-    avatar_url: string | null;
-  }[];
 };
 
 export async function getGroupMembers(groupId: string): Promise<GroupMember[]> {
   const { data, error } = await supabase
     .from('group_members')
-    .select(
-      `
-      user_id,
-      role,
-      profile:profiles (
-        id,
-        display_name,
-        avatar_url
-      )
-    `
-    )
+    .select('id, user_id, display_name, role')
     .eq('group_id', groupId);
 
   if (error) {

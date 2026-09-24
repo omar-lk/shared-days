@@ -22,11 +22,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data }) => {
-            console.log(
-                'RESTORED SESSION:',
-                data.session?.user.email ?? 'NO SESSION'
-            );
-
             setSession(data.session);
             setIsLoading(false);
         });

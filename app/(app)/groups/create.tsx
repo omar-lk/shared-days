@@ -3,19 +3,43 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
+    Keyboard,
     KeyboardAvoidingView,
+    Modal,
     Platform,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
     View,
+    Alert,
 } from 'react-native';
 import { supabase } from '../../../src/lib/supabase';
+import { colors } from '../../../src/theme/colors';
+
+const currencyOptions = [
+    { code: 'MAD', name: 'Moroccan dirham' },
+    { code: 'EUR', name: 'Euro' },
+    { code: 'USD', name: 'US dollar' },
+    { code: 'GBP', name: 'British pound' },
+    { code: 'CAD', name: 'Canadian dollar' },
+    { code: 'CHF', name: 'Swiss franc' },
+    { code: 'AED', name: 'UAE dirham' },
+    { code: 'SAR', name: 'Saudi riyal' },
+    { code: 'TND', name: 'Tunisian dinar' },
+    { code: 'DZD', name: 'Algerian dinar' },
+    { code: 'EGP', name: 'Egyptian pound' },
+    { code: 'TRY', name: 'Turkish lira' },
+];
+
 export default function CreateGroupScreen() {
     const queryClient = useQueryClient();
     const [name, setName] = useState('');
-    const canSubmit = name.trim().length > 0;
+    const [currency, setCurrency] = useState('EUR');
+    const [customCurrency, setCustomCurrency] = useState(false);
+    const [currencyMenuOpen, setCurrencyMenuOpen] = useState(false);
+    const canSubmit = name.trim().length > 0 && /^[A-Z]{3}$/.test(currency.trim());
     const [isSubmitting, setIsSubmitting] = useState(false);
     async function handleCreateGroup() {
         if (!canSubmit || isSubmitting) {
@@ -27,11 +51,11 @@ export default function CreateGroupScreen() {
 
             const { error } = await supabase.rpc('create_group', {
                 group_name: name.trim(),
-                group_currency: 'EUR',
+                group_currency: currency.trim(),
             });
 
             if (error) {
-                console.error('Create group failed:', error);
+                Alert.alert('Unable to create group', error.message);
                 return;
             }
 
@@ -50,7 +74,7 @@ export default function CreateGroupScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-                <View style={styles.container}>
+                <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
                     <View>
                         <Pressable
                             onPress={() => router.back()}
@@ -63,6 +87,7 @@ export default function CreateGroupScreen() {
                             <Text style={styles.backText}>Back</Text>
                         </Pressable>
 
+                        <Text style={styles.eyebrow}>A NEW SHARED SPACE</Text>
                         <Text style={styles.title}>Create a group</Text>
                         <Text style={styles.subtitle}>
                             Give your group a name to start splitting expenses together.
@@ -76,10 +101,39 @@ export default function CreateGroupScreen() {
                                 onChangeText={setName}
                                 placeholder="Barcelona Weekend"
                                 returnKeyType="done"
-                                onSubmitEditing={handleCreateGroup}
                                 style={styles.input}
                                 accessibilityLabel="Group name"
                             />
+
+                            <Text style={styles.currencyLabel}>Currency</Text>
+                            <Pressable
+                                onPress={() => {
+                                    Keyboard.dismiss();
+                                    setCurrencyMenuOpen(true);
+                                }}
+                                style={styles.selectButton}
+                                accessibilityRole="button"
+                                accessibilityLabel="Choose currency"
+                                accessibilityState={{ expanded: currencyMenuOpen }}
+                            >
+                                <Text style={styles.selectText}>
+                                    {customCurrency
+                                        ? currency || 'Other currency'
+                                        : `${currency} · ${currencyOptions.find((option) => option.code === currency)?.name ?? ''}`}
+                                </Text>
+                                <Text style={styles.selectArrow}>⌄</Text>
+                            </Pressable>
+                            {customCurrency && (
+                                <TextInput
+                                    value={currency}
+                                    onChangeText={(value) => setCurrency(value.toUpperCase())}
+                                    placeholder="Three-letter code"
+                                    autoCapitalize="characters"
+                                    maxLength={3}
+                                    style={[styles.input, styles.customCurrencyInput]}
+                                    accessibilityLabel="Other currency code"
+                                />
+                            )}
                         </View>
                     </View>
 
@@ -96,8 +150,55 @@ export default function CreateGroupScreen() {
                             {isSubmitting ? 'Creating...' : 'Create group'}
                         </Text>
                     </Pressable>
-                </View>
+                </ScrollView>
             </SafeAreaView>
+            <Modal
+                visible={currencyMenuOpen}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setCurrencyMenuOpen(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <Pressable
+                        style={styles.modalBackdrop}
+                        onPress={() => setCurrencyMenuOpen(false)}
+                        accessibilityLabel="Close currency list"
+                    />
+                    <View style={styles.modalPanel}>
+                        <Text style={styles.modalTitle}>Choose currency</Text>
+                        <ScrollView keyboardShouldPersistTaps="handled">
+                            {currencyOptions.map((option) => (
+                                <Pressable
+                                    key={option.code}
+                                    onPress={() => {
+                                        setCurrency(option.code);
+                                        setCustomCurrency(false);
+                                        setCurrencyMenuOpen(false);
+                                    }}
+                                    style={styles.currencyOption}
+                                    accessibilityRole="button"
+                                    accessibilityState={{ selected: !customCurrency && currency === option.code }}
+                                >
+                                    <Text style={styles.currencyOptionText}>
+                                        {option.code} · {option.name}
+                                    </Text>
+                                </Pressable>
+                            ))}
+                            <Pressable
+                                onPress={() => {
+                                    setCurrency('');
+                                    setCustomCurrency(true);
+                                    setCurrencyMenuOpen(false);
+                                }}
+                                style={styles.currencyOption}
+                                accessibilityRole="button"
+                            >
+                                <Text style={styles.currencyOptionText}>Other currency...</Text>
+                            </Pressable>
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
         </KeyboardAvoidingView>
     );
 }
@@ -105,14 +206,16 @@ export default function CreateGroupScreen() {
 const styles = StyleSheet.create({
     screen: {
         flex: 1,
+        backgroundColor: colors.sand,
     },
 
     safeArea: {
         flex: 1,
+        backgroundColor: colors.sand,
     },
 
     container: {
-        flex: 1,
+        flexGrow: 1,
         justifyContent: 'space-between',
         paddingHorizontal: 24,
         paddingTop: 16,
@@ -124,32 +227,35 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 32,
+        minHeight: 44,
     },
 
     backIcon: {
         fontSize: 32,
         lineHeight: 32,
-        color: '#111827',
+        color: colors.ink,
         marginRight: 4,
     },
 
     backText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#111827',
+        color: colors.ink,
     },
+
+    eyebrow: { color: colors.clay, fontSize: 11, fontWeight: '800', letterSpacing: 1.5, marginBottom: 8 },
 
     title: {
         fontSize: 32,
         fontWeight: '700',
-        color: '#111827',
+        color: colors.ink,
     },
 
     subtitle: {
         marginTop: 8,
         fontSize: 16,
         lineHeight: 23,
-        color: '#6B7280',
+        color: colors.muted,
     },
 
     form: {
@@ -160,24 +266,70 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         fontSize: 15,
         fontWeight: '600',
-        color: '#374151',
+        color: colors.ink,
+    },
+
+    currencyLabel: {
+        marginTop: 20,
+        marginBottom: 8,
+        fontSize: 15,
+        fontWeight: '600',
+        color: colors.ink,
     },
 
     input: {
-        height: 56,
+        minHeight: 56,
         borderWidth: 1,
-        borderColor: '#D1D5DB',
+        borderColor: colors.line,
         borderRadius: 16,
         paddingHorizontal: 16,
         fontSize: 17,
+        color: colors.ink,
+        backgroundColor: colors.paper,
     },
 
+    selectButton: {
+        minHeight: 56,
+        borderWidth: 1,
+        borderColor: colors.line,
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: colors.paper,
+    },
+
+    selectText: { color: colors.ink, fontSize: 17 },
+    selectArrow: { fontSize: 24, color: colors.muted },
+    customCurrencyInput: { marginTop: 12 },
+    modalContainer: { flex: 1, justifyContent: 'flex-end' },
+    modalBackdrop: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        backgroundColor: '#00000066',
+    },
+    modalPanel: {
+        maxHeight: '70%',
+        padding: 24,
+        paddingBottom: 40,
+        backgroundColor: colors.paper,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+    },
+    modalTitle: { color: colors.ink, fontSize: 20, fontWeight: '700', marginBottom: 12 },
+    currencyOption: { minHeight: 52, justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: colors.line },
+    currencyOptionText: { color: colors.ink, fontSize: 17 },
+
     button: {
-        height: 56,
+        minHeight: 56,
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 16,
-        backgroundColor: '#111827',
+        backgroundColor: colors.clay,
     },
 
     buttonDisabled: {
@@ -189,7 +341,7 @@ const styles = StyleSheet.create({
     },
 
     buttonText: {
-        color: '#FFFFFF',
+        color: colors.white,
         fontSize: 17,
         fontWeight: '600',
     },

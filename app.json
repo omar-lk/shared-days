@@ -42,7 +42,15 @@
       "expo-font",
       "expo-image",
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a bill photo to fill in its articles and prices.",
+          "cameraPermission": "Take a bill photo to fill in its articles and prices.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

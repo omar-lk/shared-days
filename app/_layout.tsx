@@ -1,4 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
+import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
@@ -21,8 +22,10 @@ function RootNavigator() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="auth/callback" />
       <Stack.Protected guard={!session}>
         <Stack.Screen name="login" />
+        <Stack.Screen name="signup" />
       </Stack.Protected>
 
       <Stack.Protected guard={!!session}>
@@ -35,6 +38,7 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
+      <StatusBar style="dark" />
       <AuthProvider>
         <RootNavigator />
       </AuthProvider>
